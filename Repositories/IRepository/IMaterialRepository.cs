@@ -6,12 +6,12 @@ namespace StockSystem.Repositories.IRepository
 {
     public interface IMaterialRepository
     {
-        // 所有Material都指定命名空间
-        Task<List<StockSystem.Models.Material>> GetAllAsync();
-        Task AddAsync(StockSystem.Models.Material m);
-        Task UpdateAsync(StockSystem.Models.Material m);
-        Task<StockSystem.Models.Material?> GetByIdAsync(int id);
-        void Remove(StockSystem.Models.Material m);
+        
+        Task<List<Material>> GetAllAsync();
+        Task AddAsync(Material m);
+        Task UpdateAsync(Material m);
+        Task<Material?> GetByIdAsync(int id);
+        void Remove(Material m);
         Task SaveAsync();
     }
 }

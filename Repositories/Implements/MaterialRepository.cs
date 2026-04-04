@@ -6,7 +6,7 @@ namespace StockSystem.Repositories.Implements
 {
     public class MaterialRepository : IMaterialRepository
     {
-        // AppDbContext无命名空间，直接用，无需using
+        
         private readonly AppDbContext _db;
 
         public MaterialRepository(AppDbContext db)
@@ -14,30 +14,30 @@ namespace StockSystem.Repositories.Implements
             _db = db;
         }
 
-        // 所有Material都明确指定命名空间，避免歧义
-        public async Task<List<StockSystem.Models.Material>> GetAllAsync()
+        
+        public async Task<List<Material>> GetAllAsync()
         {
-            return await _db.Materials.ToListAsync<StockSystem.Models.Material>();
+            return await _db.Materials.ToListAsync<Material>();
         }
 
-        public async Task AddAsync(StockSystem.Models.Material m)
+        public async Task AddAsync(Material m)
         {
             _db.Materials.Add(m);
             await _db.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(StockSystem.Models.Material m)
+        public async Task UpdateAsync(Material m)
         {
             _db.Materials.Update(m);
             await _db.SaveChangesAsync();
         }
 
-        public async Task<StockSystem.Models.Material?> GetByIdAsync(int id)
+        public async Task<Material?> GetByIdAsync(int id)
         {
             return await _db.Materials.FindAsync(id);
         }
 
-        public void Remove(StockSystem.Models.Material m)
+        public void Remove(Material m)
         {
             _db.Materials.Remove(m);
         }

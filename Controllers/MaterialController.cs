@@ -24,7 +24,7 @@ public class MaterialController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Add(StockSystem.Models.Material model)
+    public async Task<IActionResult> Add(Material model)
     {
         var result = await _materialService.AddAsync(model);
         return Ok(result);
@@ -32,7 +32,7 @@ public class MaterialController : ControllerBase
 
     [HttpPut]
     // 明确指定命名空间，避免歧义
-    public async Task<IActionResult> Update(StockSystem.Models.Material model)
+    public async Task<IActionResult> Update(Material model)
     {
         var result = await _materialService.UpdateAsync(model);
         return Ok(result);
