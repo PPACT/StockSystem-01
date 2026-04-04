@@ -1,8 +1,5 @@
-﻿// 引用Material模型命名空间
-// 引用仓库接口命名空间
-using StockSystem.Repositories.IRepository;
+﻿using StockSystem.Repositories.IRepository;
 
-// 无命名空间，保持原有结构
 public class MaterialService : IMaterialService
 {
     private readonly IMaterialRepository _repo;

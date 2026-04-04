@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-// 关键1：引用Material模型的命名空间（必须）
 using StockSystem.Models;
-// 关键2：仓库接口命名空间
 using StockSystem.Repositories.IRepository;
 
 namespace StockSystem.Repositories.Implements

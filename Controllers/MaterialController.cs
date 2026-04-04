@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-// 关键：添加Material模型的命名空间引用
 using StockSystem.Models;
 
 [ApiController]
@@ -25,7 +24,6 @@ public class MaterialController : ControllerBase
     }
 
     [HttpPost]
-    // 现在能识别StockSystem.Models.Material类型
     public async Task<IActionResult> Add(StockSystem.Models.Material model)
     {
         var result = await _materialService.AddAsync(model);

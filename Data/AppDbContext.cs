@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-// 关键：引用Material模型的命名空间
 using StockSystem.Models;
 
-// 无命名空间，保持原有结构
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }

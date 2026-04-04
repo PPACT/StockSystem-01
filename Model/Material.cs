@@ -11,7 +11,7 @@ namespace StockSystem.Models
         [Required(ErrorMessage = "物料名称不能为空")]
         public string Name { get; set; } = string.Empty;
 
-        // 物料编码：最大长度20，必填，唯一（可选）
+        // 物料编码：最大长度20，必填
         [MaxLength(20, ErrorMessage = "物料编码最长20个字符")]
         [Required(ErrorMessage = "物料编码不能为空")]
         [RegularExpression(@"^[A-Z0-9]+$", ErrorMessage = "物料编码仅支持大写字母和数字")] // 可选：编码格式约束

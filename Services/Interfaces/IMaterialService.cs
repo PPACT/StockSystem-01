@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
-// 引用Material模型命名空间
 using StockSystem.Models;
 
-// 无命名空间，保持原有结构
 public interface IMaterialService
 {
     Task<object> GetListAsync();

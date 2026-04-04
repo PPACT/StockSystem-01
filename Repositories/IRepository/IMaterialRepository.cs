@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-// 引用Material模型命名空间
 using StockSystem.Models;
 
 namespace StockSystem.Repositories.IRepository
