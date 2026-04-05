@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using StockSystem.Models;
+using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -30,10 +31,12 @@ public class MaterialController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut]
-    // 明确指定命名空间，避免歧义
-    public async Task<IActionResult> Update(Material model)
+
+    [HttpPut("{id}")] // 这里必须加 {id}
+    public async Task<IActionResult> Update(int id, Material model)
     {
+        if (id != model.Id) return BadRequest("参数不匹配");
+
         var result = await _materialService.UpdateAsync(model);
         return Ok(result);
     }

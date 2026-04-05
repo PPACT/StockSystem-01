@@ -36,19 +36,19 @@
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <label class="form-label">物料名称 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" maxlength="50" required>
+                            <input type="text" class="form-control" id="Name" maxlength="50" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">物料编码 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="code" maxlength="20" pattern="[A-Z0-9]+" title="仅支持大写字母和数字" required>
+                            <input type="text" class="form-control" id="Code" maxlength="20" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">库存数量 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="stockNumber" min="0" required>
+                            <input type="number" class="form-control" id="StockNumber" min="0" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">备注</label>
-                            <input type="text" class="form-control" id="remark" maxlength="200">
+                            <input type="text" class="form-control" id="Remark">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">提交</button>
@@ -59,11 +59,45 @@
             </div>
         </div>
 
+        <!-- 修改弹窗 -->
+        <div class="modal fade" id="editModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>修改物料</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="editId">
+                        <div class="mb-3">
+                            <label class="form-label">物料名称</label>
+                            <input type="text" class="form-control" id="editName">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">物料编码</label>
+                            <input type="text" class="form-control" id="editCode">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">库存数量</label>
+                            <input type="number" class="form-control" id="editStockNumber">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">备注</label>
+                            <input type="text" class="form-control" id="editRemark">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" onclick="saveEdit()">保存修改</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 物料列表 -->
         <div class="card table-card">
             <div class="card-body">
                 <h5 class="card-title">物料列表</h5>
-                <!-- 新增：刷新按钮，手动同步数据库数据 -->
                 <button class="btn btn-sm btn-info mb-2" onclick="loadMaterialList()">刷新列表</button>
                 <table class="table table-striped table-hover">
                     <thead>
@@ -88,121 +122,104 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 替换成你的实际接口地址（关键！必须和后端端口一致）
         const baseUrl = "/api/Material";
-        // 若后端是http协议，改成：const baseUrl = "http://localhost:5000/api/Material";
 
-        // 页面加载+刷新按钮都触发此函数，强制从数据库拉取最新数据
         window.onload = loadMaterialList;
 
-        // 核心：加载物料列表（优化版，确保读取所有数据）
+        // 加载列表（已对齐：Name / Code / StockNumber / Remark）
         async function loadMaterialList() {
             const tableBody = document.getElementById("materialTableBody");
-            // 加载中提示
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
 
             try {
-                // 强制GET请求，禁用缓存（关键！避免读取浏览器缓存）
-                const response = await fetch(baseUrl, {
-                    method: "GET",
-                    cache: "no-cache", // 禁用缓存，确保读取最新数据
-                    headers: {
-                        "Cache-Control": "no-cache",
-                        "Pragma": "no-cache"
-                    }
-                });
-
-                // 校验响应状态
-                if (!response.ok) throw new Error(`接口返回错误：${response.status}`);
+                const response = await fetch(baseUrl, { cache: "no-cache" });
+                if (!response.ok) throw new Error("接口异常");
 
                 const result = await response.json();
-                console.log("后端返回的完整数据：", result); // 调试：查看接口返回的所有数据
+                let list = result.data || result;
 
-                // 清空列表，重新渲染
                 tableBody.innerHTML = "";
 
-                // 情况1：有数据
-                if (result.code === 200 && result.data && result.data.length > 0) {
-                    result.data.forEach(material => {
-                        const tr = document.createElement("tr");
-                        // 确保每个字段都正确渲染（兼容null/空值）
-                        tr.innerHTML = `
-                                <td>${material.id || "-"}</td>
-                                <td>${material.name || "-"}</td>
-                                <td>${material.code || "-"}</td>
-                                <td>${material.stockNumber || 0}</td>
-                                <td>${material.remark || "-"}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteMaterial(${material.id})">删除</button>
-                                </td>
-                            `;
-                        tableBody.appendChild(tr);
-                    });
-                }
-                // 情况2：无数据
-                else {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无物料数据</td></tr>';
-                }
-            } catch (error) {
-                console.error("加载列表失败：", error);
-                tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败：${error.message}</td></tr>`;
-                showAlert("errorAlert");
+                list.forEach(m => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                            <td>${m.id}</td>
+                            <td>${m.name}</td>
+                            <td>${m.code}</td>
+                            <td>${m.stockNumber}</td>
+                            <td>${m.remark || '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="openEdit(${m.id})">修改</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteMaterial(${m.id})">删除</button>
+                            </td>
+                        `;
+                    tableBody.appendChild(tr);
+                });
+            } catch (err) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-danger">加载失败</td></tr>`;
             }
         }
 
-        // 新增物料（优化版，确保数据正确提交）
-        document.getElementById("materialForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
-            const materialData = {
-                name: document.getElementById("name").value.trim(),
-                code: document.getElementById("code").value.trim().toUpperCase(), // 强制大写，符合约束
-                stockNumber: parseInt(document.getElementById("stockNumber").value),
-                remark: document.getElementById("remark").value.trim() || null
+        // 打开修改
+        async function openEdit(id) {
+            const res = await fetch(`${baseUrl}/${id}`);
+            const m = await res.json();
+
+            document.getElementById("editId").value = m.id;
+            document.getElementById("editName").value = m.name;
+            document.getElementById("editCode").value = m.code;
+            document.getElementById("editStockNumber").value = m.stockNumber;
+            document.getElementById("editRemark").value = m.remark || "";
+
+            new bootstrap.Modal(document.getElementById("editModal")).show();
+        }
+
+        // 保存修改
+        async function saveEdit() {
+            const model = {
+                id: parseInt(document.getElementById("editId").value),
+                name: document.getElementById("editName").value,
+                code: document.getElementById("editCode").value,
+                stockNumber: parseInt(document.getElementById("editStockNumber").value),
+                remark: document.getElementById("editRemark").value
             };
 
-            try {
-                const response = await fetch(baseUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(materialData)
-                });
-                const result = await response.json();
-                if (result.code === 200) {
-                    showAlert("successAlert");
-                    this.reset();
-                    loadMaterialList(); // 重新加载最新数据
-                } else {
-                    throw new Error("新增失败：" + JSON.stringify(result));
-                }
-            } catch (error) {
-                console.error("新增失败：", error);
-                showAlert("errorAlert");
-            }
-        });
+            await fetch(`${baseUrl}/${model.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(model)
+            });
 
-        // 删除物料
-        async function deleteMaterial(id) {
-            if (!confirm("确定要删除该物料吗？")) return;
-            try {
-                const response = await fetch(`${baseUrl}/${id}`, { method: "DELETE" });
-                const result = await response.json();
-                if (result.code === 200) {
-                    showAlert("successAlert");
-                    loadMaterialList();
-                } else {
-                    throw new Error("删除失败：" + JSON.stringify(result));
-                }
-            } catch (error) {
-                console.error("删除失败：", error);
-                showAlert("errorAlert");
-            }
+            bootstrap.Modal.getInstance(document.getElementById("editModal")).hide();
+            loadMaterialList();
+            alert("修改成功！");
         }
 
-        // 提示框逻辑
-        function showAlert(alertId) {
-            const alert = document.getElementById(alertId);
-            alert.style.display = "block";
-            setTimeout(() => alert.style.display = "none", 2000);
+        // 新增
+        document.getElementById("materialForm").addEventListener("submit", async e => {
+            e.preventDefault();
+            const model = {
+                name: document.getElementById("Name").value,
+                code: document.getElementById("Code").value,
+                stockNumber: parseInt(document.getElementById("StockNumber").value),
+                remark: document.getElementById("Remark").value
+            };
+
+            await fetch(baseUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(model)
+            });
+
+            loadMaterialList();
+            e.target.reset();
+        });
+
+        // 删除
+        async function deleteMaterial(id) {
+            if (!confirm("确定删除？")) return;
+            await fetch(`${baseUrl}/${id}`, { method: "DELETE" });
+            loadMaterialList();
         }
     </script>
 </body>
