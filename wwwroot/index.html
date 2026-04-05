@@ -3,223 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>库存管理系统 - 物料管理</title>
+    <title>物料库存管理</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .container {
             margin-top: 30px;
         }
-
-        .form-card {
-            margin-bottom: 20px;
-        }
-
-        .table-card {
-            margin-top: 20px;
-        }
-
-        .alert {
-            margin-top: 10px;
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 class="text-center mb-4">物料库存管理</h2>
+        <h2 class="mb-4 text-center">物料库存管理</h2>
 
-        <!-- 新增物料表单 -->
-        <div class="card form-card">
-            <div class="card-body">
-                <h5 class="card-title">新增物料</h5>
-                <form id="materialForm">
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label class="form-label">物料名称 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Name" maxlength="50" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">物料编码 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Code" maxlength="20" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">库存数量 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="StockNumber" min="0" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-control" id="Remark">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">提交</button>
-                    <button type="reset" class="btn btn-secondary">重置</button>
-                </form>
-                <div class="alert alert-success" id="successAlert">操作成功！</div>
-                <div class="alert alert-danger" id="errorAlert">操作失败，请重试！</div>
+        <div class="card p-3 mb-3">
+            <h5>新增物料</h5>
+            <div class="mb-2">
+                <input class="form-control" id="name" placeholder="物料名称">
             </div>
+            <div class="mb-2">
+                <input class="form-control" id="code" placeholder="物料编码">
+            </div>
+            <div class="mb-2">
+                <input class="form-control" id="stock" placeholder="库存数量" type="number">
+            </div>
+            <div class="mb-2">
+                <input class="form-control" id="remark" placeholder="备注">
+            </div>
+            <button class="btn btn-primary" onclick="add()">新增提交</button>
         </div>
 
-        <!-- 修改弹窗 -->
-        <div class="modal fade" id="editModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5>修改物料</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>物料名称</th>
+                    <th>物料编码</th>
+                    <th>库存数量</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="list"></tbody>
+        </table>
+    </div>
+
+    <!-- 修改弹窗 -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>修改物料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="eId">
+                    <div class="mb-2">
+                        <input class="form-control" id="eName" placeholder="物料名称">
                     </div>
-                    <div class="modal-body">
-                        <input type="hidden" id="editId">
-                        <div class="mb-3">
-                            <label class="form-label">物料名称</label>
-                            <input type="text" class="form-control" id="editName">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">物料编码</label>
-                            <input type="text" class="form-control" id="editCode">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">库存数量</label>
-                            <input type="number" class="form-control" id="editStockNumber">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-control" id="editRemark">
-                        </div>
+                    <div class="mb-2">
+                        <input class="form-control" id="eCode" placeholder="物料编码">
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                        <button type="button" class="btn btn-primary" onclick="saveEdit()">保存修改</button>
+                    <div class="mb-2">
+                        <input class="form-control" id="eStock" placeholder="库存数量" type="number">
+                    </div>
+                    <div class="mb-2">
+                        <input class="form-control" id="eRemark" placeholder="备注">
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- 物料列表 -->
-        <div class="card table-card">
-            <div class="card-body">
-                <h5 class="card-title">物料列表</h5>
-                <button class="btn btn-sm btn-info mb-2" onclick="loadMaterialList()">刷新列表</button>
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>物料名称</th>
-                            <th>物料编码</th>
-                            <th>库存数量</th>
-                            <th>备注</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="materialTableBody">
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">加载中...</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEdit()">保存修改</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const baseUrl = "/api/Material";
+        const api = "/api/Material";
 
-        window.onload = loadMaterialList;
+        window.onload = load;
 
-        // 加载列表（已对齐：Name / Code / StockNumber / Remark）
-        async function loadMaterialList() {
-            const tableBody = document.getElementById("materialTableBody");
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
-
-            try {
-                const response = await fetch(baseUrl, { cache: "no-cache" });
-                if (!response.ok) throw new Error("接口异常");
-
-                const result = await response.json();
-                let list = result.data || result;
-
-                tableBody.innerHTML = "";
-
-                list.forEach(m => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                            <td>${m.id}</td>
-                            <td>${m.name}</td>
-                            <td>${m.code}</td>
-                            <td>${m.stockNumber}</td>
-                            <td>${m.remark || '-'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-warning" onclick="openEdit(${m.id})">修改</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteMaterial(${m.id})">删除</button>
-                            </td>
-                        `;
-                    tableBody.appendChild(tr);
-                });
-            } catch (err) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="text-danger">加载失败</td></tr>`;
-            }
+        // 加载列表
+        async function load() {
+            const res = await fetch(api, { cache: "no-cache" });
+            const result = await res.json();
+            const list = result.data || [];
+            const html = list.map(m => `
+                <tr>
+                    <td>${m.id}</td>
+                    <td>${m.name}</td>
+                    <td>${m.code}</td>
+                    <td>${m.stockNumber}</td>
+                    <td>${m.remark || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="edit(${m.id})">修改</button>
+                        <button class="btn btn-sm btn-danger" onclick="del(${m.id})">删除</button>
+                    </td>
+                </tr>
+                `).join("");
+            document.getElementById("list").innerHTML = html;
         }
 
         // 打开修改
-        async function openEdit(id) {
-            const res = await fetch(`${baseUrl}/${id}`);
+        async function edit(id) {
+            const res = await fetch(`${api}/${id}`);
             const m = await res.json();
-
-            document.getElementById("editId").value = m.id;
-            document.getElementById("editName").value = m.name;
-            document.getElementById("editCode").value = m.code;
-            document.getElementById("editStockNumber").value = m.stockNumber;
-            document.getElementById("editRemark").value = m.remark || "";
-
+            document.getElementById("eId").value = m.id;
+            document.getElementById("eName").value = m.name;
+            document.getElementById("eCode").value = m.code;
+            document.getElementById("eStock").value = m.stockNumber;
+            document.getElementById("eRemark").value = m.remark || "";
             new bootstrap.Modal(document.getElementById("editModal")).show();
         }
 
-        // 保存修改
+        // 保存修改（无alert）
         async function saveEdit() {
             const model = {
-                id: parseInt(document.getElementById("editId").value),
-                name: document.getElementById("editName").value,
-                code: document.getElementById("editCode").value,
-                stockNumber: parseInt(document.getElementById("editStockNumber").value),
-                remark: document.getElementById("editRemark").value
+                id: parseInt(document.getElementById("eId").value),
+                name: document.getElementById("eName").value,
+                code: document.getElementById("eCode").value,
+                stockNumber: parseInt(document.getElementById("eStock").value),
+                remark: document.getElementById("eRemark").value
             };
 
-            await fetch(`${baseUrl}/${model.id}`, {
+            await fetch(`${api}/${model.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(model)
             });
 
             bootstrap.Modal.getInstance(document.getElementById("editModal")).hide();
-            loadMaterialList();
-            alert("修改成功！");
+            load();
+            showTip("修改成功！");
         }
 
         // 新增
-        document.getElementById("materialForm").addEventListener("submit", async e => {
-            e.preventDefault();
+        async function add() {
             const model = {
-                name: document.getElementById("Name").value,
-                code: document.getElementById("Code").value,
-                stockNumber: parseInt(document.getElementById("StockNumber").value),
-                remark: document.getElementById("Remark").value
+                name: document.getElementById("name").value,
+                code: document.getElementById("code").value,
+                stockNumber: parseInt(document.getElementById("stock").value || 0),
+                remark: document.getElementById("remark").value
             };
 
-            await fetch(baseUrl, {
+            await fetch(api, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(model)
             });
 
-            loadMaterialList();
-            e.target.reset();
-        });
+            load();
+            showTip("新增成功！");
+        }
 
         // 删除
-        async function deleteMaterial(id) {
-            if (!confirm("确定删除？")) return;
-            await fetch(`${baseUrl}/${id}`, { method: "DELETE" });
-            loadMaterialList();
+        async function del(id) {
+            if (!confirm("确定删除该物料？")) return;
+
+            await fetch(`${api}/${id}`, { method: "DELETE" });
+            load();
+            showTip("删除成功！");
+        }
+
+        // 自动消失提示（不挡界面）
+        function showTip(msg) {
+            const tip = document.createElement("div");
+            tip.style.position = "fixed";
+            tip.style.top = "20px";
+            tip.style.left = "50%";
+            tip.style.transform = "translateX(-50%)";
+            tip.style.padding = "10px 25px";
+            tip.style.backgroundColor = "#198754";
+            tip.style.color = "#fff";
+            tip.style.borderRadius = "6px";
+            tip.style.zIndex = "9999";
+            tip.innerText = msg;
+            document.body.appendChild(tip);
+
+            setTimeout(() => tip.remove(), 2000);
         }
     </script>
 </body>
