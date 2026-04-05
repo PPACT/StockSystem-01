@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR.Protocol;
 using StockSystem.Models;
 using System.Threading.Tasks;
 
@@ -7,10 +6,8 @@ using System.Threading.Tasks;
 [Route("api/[controller]")]
 public class MaterialController : ControllerBase
 {
-    // 注入Service，不再直接注入DbContext
     private readonly IMaterialService _materialService;
 
-    // 构造函数接收Service（DI自动注入）
     public MaterialController(IMaterialService materialService)
     {
         _materialService = materialService;
@@ -19,9 +16,23 @@ public class MaterialController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetList()
     {
-        // 只调用Service，不写任何逻辑
         var result = await _materialService.GetListAsync();
         return Ok(result);
+    }
+
+    // ✅ 正确获取单条数据（给修改弹窗用）
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var item = await _materialService.GetByIdAsync(id);
+
+        // ✅ 如果 null，返回 404，前端不会报错
+        if (item == null)
+        {
+            return NotFound(new { code = 404, msg = "物料不存在" });
+        }
+
+        return Ok(item);
     }
 
     [HttpPost]
@@ -31,8 +42,7 @@ public class MaterialController : ControllerBase
         return Ok(result);
     }
 
-
-    [HttpPut("{id}")] // 这里必须加 {id}
+    [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Material model)
     {
         if (id != model.Id) return BadRequest("参数不匹配");
