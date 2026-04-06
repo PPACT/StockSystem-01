@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <title>登录</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .login {
+            margin: 50px auto;
+            width: 350px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="login">
+        <h2>物料系统登录</h2>
+        <div>
+            账号：<input v-model="user.username" /><br><br>
+            密码：<input type="password" v-model="user.password" /><br><br>
+            <button @click="login">登录</button>
+            <p style="color:red">{{msg}}</p>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    user: { username: "", password: "" },
+                    msg: ""
+                }
+            },
+            methods: {
+                async login() {
+                    try {
+                        const res = await axios.post("/api/Login", this.user);
+                        localStorage.setItem("token", res.data.token);
+                        location.href = "index.html";
+                    } catch {
+                        this.msg = "账号或密码错误";
+                    }
+                }
+            }
+        }).mount("#app");
+    </script>
+</body>
+</html>

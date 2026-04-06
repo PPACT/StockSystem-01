@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StockSystem.Models;
 using StockSystem.Repositories.IRepository;
+using StockSystem.Data;
 
 namespace StockSystem.Repositories.Implements
 {

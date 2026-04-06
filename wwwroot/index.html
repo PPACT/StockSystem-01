@@ -15,6 +15,9 @@
     <div class="container">
         <h2 class="mb-4 text-center">物料库存管理</h2>
 
+        <!-- 退出登录按钮 -->
+        <button class="btn btn-danger mb-3" onclick="logout()">退出登录</button>
+
         <div class="card p-3 mb-3">
             <h5>新增物料</h5>
             <div class="mb-2">
@@ -80,34 +83,58 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ==========================================
+        // ===== 登录判断：没登录直接跳回登录页 =====
+        // ==========================================
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("请先登录！");
+            location.href = "login.html"; // 跳转到登录页面
+        }
+
         const api = "/api/Material";
+
+        // ==========================================
+        // ===== 所有请求自动带上 token =====
+        // ==========================================
+        function getAuthHeaders() {
+            return {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token // 关键：给后端鉴权
+            };
+        }
 
         window.onload = load;
 
         // 加载列表
         async function load() {
-            const res = await fetch(api, { cache: "no-cache" });
+            const res = await fetch(api, {
+                cache: "no-cache",
+                headers: getAuthHeaders() // 带token
+            });
             const result = await res.json();
             const list = result.data || [];
             const html = list.map(m => `
-                <tr>
-                    <td>${m.id}</td>
-                    <td>${m.name}</td>
-                    <td>${m.code}</td>
-                    <td>${m.stockNumber}</td>
-                    <td>${m.remark || '-'}</td>
-                    <td>
-                        <button class="btn btn-sm btn-warning" onclick="edit(${m.id})">修改</button>
-                        <button class="btn btn-sm btn-danger" onclick="del(${m.id})">删除</button>
-                    </td>
-                </tr>
-                `).join("");
+                    <tr>
+                        <td>${m.id}</td>
+                        <td>${m.name}</td>
+                        <td>${m.code}</td>
+                        <td>${m.stockNumber}</td>
+                        <td>${m.remark || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="edit(${m.id})">修改</button>
+                            <button class="btn btn-sm btn-danger" onclick="del(${m.id})">删除</button>
+                        </td>
+                    </tr>
+                    `).join("");
             document.getElementById("list").innerHTML = html;
         }
 
         // 打开修改
         async function edit(id) {
-            const res = await fetch(`${api}/${id}`);
+            const res = await fetch(`${api}/${id}`, {
+                headers: getAuthHeaders()
+            });
             const m = await res.json();
             document.getElementById("eId").value = m.id;
             document.getElementById("eName").value = m.name;
@@ -117,7 +144,7 @@
             new bootstrap.Modal(document.getElementById("editModal")).show();
         }
 
-        // 保存修改（无alert）
+        // 保存修改
         async function saveEdit() {
             const model = {
                 id: parseInt(document.getElementById("eId").value),
@@ -129,7 +156,7 @@
 
             await fetch(`${api}/${model.id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(model)
             });
 
@@ -149,7 +176,7 @@
 
             await fetch(api, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(model)
             });
 
@@ -161,12 +188,21 @@
         async function del(id) {
             if (!confirm("确定删除该物料？")) return;
 
-            await fetch(`${api}/${id}`, { method: "DELETE" });
+            await fetch(`${api}/${id}`, {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
             load();
             showTip("删除成功！");
         }
 
-        // 自动消失提示（不挡界面）
+        // 退出登录
+        function logout() {
+            localStorage.removeItem("token");
+            location.href = "login.html";
+        }
+
+        // 提示
         function showTip(msg) {
             const tip = document.createElement("div");
             tip.style.position = "fixed";
@@ -180,7 +216,6 @@
             tip.style.zIndex = "9999";
             tip.innerText = msg;
             document.body.appendChild(tip);
-
             setTimeout(() => tip.remove(), 2000);
         }
     </script>
