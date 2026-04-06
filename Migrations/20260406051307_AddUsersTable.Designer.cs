@@ -11,8 +11,8 @@ using StockSystem.Data;
 namespace StockSystem.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260406043303_Init")]
-    partial class Init
+    [Migration("20260406051307_AddUsersTable")]
+    partial class AddUsersTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -61,6 +61,9 @@ namespace StockSystem.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Password")
                         .IsRequired()

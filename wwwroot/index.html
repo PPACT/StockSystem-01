@@ -15,23 +15,15 @@
     <div class="container">
         <h2 class="mb-4 text-center">物料库存管理</h2>
 
-        <!-- 退出登录按钮 -->
         <button class="btn btn-danger mb-3" onclick="logout()">退出登录</button>
+        <button class="btn btn-outline-secondary mb-3 ms-2" onclick="load()">刷新</button>
 
         <div class="card p-3 mb-3">
             <h5>新增物料</h5>
-            <div class="mb-2">
-                <input class="form-control" id="name" placeholder="物料名称">
-            </div>
-            <div class="mb-2">
-                <input class="form-control" id="code" placeholder="物料编码">
-            </div>
-            <div class="mb-2">
-                <input class="form-control" id="stock" placeholder="库存数量" type="number">
-            </div>
-            <div class="mb-2">
-                <input class="form-control" id="remark" placeholder="备注">
-            </div>
+            <input class="form-control mb-2" id="name" placeholder="物料名称">
+            <input class="form-control mb-2" id="code" placeholder="物料编码">
+            <input class="form-control mb-2" id="stock" placeholder="库存数量" type="number">
+            <input class="form-control mb-2" id="remark" placeholder="备注">
             <button class="btn btn-primary" onclick="add()">新增提交</button>
         </div>
 
@@ -50,32 +42,23 @@
         </table>
     </div>
 
-    <!-- 修改弹窗 -->
     <div class="modal fade" id="editModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5>修改物料</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="eId">
-                    <div class="mb-2">
-                        <input class="form-control" id="eName" placeholder="物料名称">
-                    </div>
-                    <div class="mb-2">
-                        <input class="form-control" id="eCode" placeholder="物料编码">
-                    </div>
-                    <div class="mb-2">
-                        <input class="form-control" id="eStock" placeholder="库存数量" type="number">
-                    </div>
-                    <div class="mb-2">
-                        <input class="form-control" id="eRemark" placeholder="备注">
-                    </div>
+                    <input class="form-control mb-2" id="eName">
+                    <input class="form-control mb-2" id="eCode">
+                    <input class="form-control mb-2" id="eStock">
+                    <input class="form-control mb-2" id="eRemark">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    <button type="button" class="btn btn-primary" onclick="saveEdit()">保存修改</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button class="btn btn-primary" onclick="saveEdit()">保存修改</button>
                 </div>
             </div>
         </div>
@@ -83,58 +66,57 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ==========================================
-        // ===== 登录判断：没登录直接跳回登录页 =====
-        // ==========================================
         const token = localStorage.getItem("token");
         if (!token) {
             alert("请先登录！");
-            location.href = "login.html"; // 跳转到登录页面
+            location.href = "login.html";
         }
 
         const api = "/api/Material";
-
-        // ==========================================
-        // ===== 所有请求自动带上 token =====
-        // ==========================================
-        function getAuthHeaders() {
-            return {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token // 关键：给后端鉴权
-            };
-        }
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        };
 
         window.onload = load;
 
-        // 加载列表
+        // ==========================
+        // 万能加载方法：不管后端返回结构，都能显示
+        // ==========================
         async function load() {
-            const res = await fetch(api, {
-                cache: "no-cache",
-                headers: getAuthHeaders() // 带token
-            });
-            const result = await res.json();
-            const list = result.data || [];
-            const html = list.map(m => `
+            try {
+                const res = await fetch(api, { headers });
+                let result = await res.json();
+
+                // 重点：自动兼容数组 / 包裹对象
+                let list = Array.isArray(result) ? result : (result.data ?? result);
+
+                console.log("实际拿到的数据：", list); // 看控制台一定有
+
+                const html = list.map(m => `
                     <tr>
                         <td>${m.id}</td>
                         <td>${m.name}</td>
                         <td>${m.code}</td>
                         <td>${m.stockNumber}</td>
-                        <td>${m.remark || '-'}</td>
+                        <td>${m.remark || ''}</td>
                         <td>
                             <button class="btn btn-sm btn-warning" onclick="edit(${m.id})">修改</button>
                             <button class="btn btn-sm btn-danger" onclick="del(${m.id})">删除</button>
                         </td>
                     </tr>
                     `).join("");
-            document.getElementById("list").innerHTML = html;
+
+                document.getElementById("list").innerHTML = html;
+            }
+            catch (e) {
+                console.error("加载失败", e);
+                alert("加载失败：" + e.message);
+            }
         }
 
-        // 打开修改
         async function edit(id) {
-            const res = await fetch(`${api}/${id}`, {
-                headers: getAuthHeaders()
-            });
+            const res = await fetch(`${api}/${id}`, { headers });
             const m = await res.json();
             document.getElementById("eId").value = m.id;
             document.getElementById("eName").value = m.name;
@@ -144,7 +126,6 @@
             new bootstrap.Modal(document.getElementById("editModal")).show();
         }
 
-        // 保存修改
         async function saveEdit() {
             const model = {
                 id: parseInt(document.getElementById("eId").value),
@@ -153,19 +134,16 @@
                 stockNumber: parseInt(document.getElementById("eStock").value),
                 remark: document.getElementById("eRemark").value
             };
-
             await fetch(`${api}/${model.id}`, {
                 method: "PUT",
-                headers: getAuthHeaders(),
+                headers: headers,
                 body: JSON.stringify(model)
             });
-
             bootstrap.Modal.getInstance(document.getElementById("editModal")).hide();
             load();
-            showTip("修改成功！");
+            showTip("修改成功");
         }
 
-        // 新增
         async function add() {
             const model = {
                 name: document.getElementById("name").value,
@@ -173,50 +151,37 @@
                 stockNumber: parseInt(document.getElementById("stock").value || 0),
                 remark: document.getElementById("remark").value
             };
-
             await fetch(api, {
                 method: "POST",
-                headers: getAuthHeaders(),
+                headers: headers,
                 body: JSON.stringify(model)
             });
-
+            document.getElementById("name").value = "";
+            document.getElementById("code").value = "";
+            document.getElementById("stock").value = "";
+            document.getElementById("remark").value = "";
             load();
-            showTip("新增成功！");
+            showTip("新增成功");
         }
 
-        // 删除
         async function del(id) {
-            if (!confirm("确定删除该物料？")) return;
-
-            await fetch(`${api}/${id}`, {
-                method: "DELETE",
-                headers: getAuthHeaders()
-            });
+            if (!confirm("确定删除？")) return;
+            await fetch(`${api}/${id}`, { method: "DELETE", headers });
             load();
-            showTip("删除成功！");
+            showTip("删除成功");
         }
 
-        // 退出登录
         function logout() {
-            localStorage.removeItem("token");
+            localStorage.clear();
             location.href = "login.html";
         }
 
-        // 提示
         function showTip(msg) {
-            const tip = document.createElement("div");
-            tip.style.position = "fixed";
-            tip.style.top = "20px";
-            tip.style.left = "50%";
-            tip.style.transform = "translateX(-50%)";
-            tip.style.padding = "10px 25px";
-            tip.style.backgroundColor = "#198754";
-            tip.style.color = "#fff";
-            tip.style.borderRadius = "6px";
-            tip.style.zIndex = "9999";
-            tip.innerText = msg;
-            document.body.appendChild(tip);
-            setTimeout(() => tip.remove(), 2000);
+            const div = document.createElement("div");
+            div.style.cssText = "position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 20px;background:#198754;color:white;border-radius:5px;z-index:9999";
+            div.textContent = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2000);
         }
     </script>
 </body>
