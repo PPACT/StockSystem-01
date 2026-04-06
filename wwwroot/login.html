@@ -37,54 +37,42 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 登录接口地址（贴合你后端 api 路由）
         const loginApi = "/api/Login";
 
-        // 登录方法
         async function login() {
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value.trim();
             const errorMsg = document.getElementById("errorMsg");
 
-            // 简单前端验证（和你物料页风格一致）
             if (!username || !password) {
                 errorMsg.innerText = "请输入账号和密码！";
                 return;
             }
 
             try {
-                // 调用后端 LoginController 接口，传递账号密码
                 const res = await fetch(loginApi, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
                 });
 
-                // 登录失败（账号密码错误）
                 if (!res.ok) {
                     errorMsg.innerText = "账号或密码错误！";
                     return;
                 }
 
-                // 登录成功，获取后端返回的 token、用户名、是否管理员
                 const data = await res.json();
-                // 保存到本地存储（供 index.html、user.html 判断权限）
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("username", data.username);
                 localStorage.setItem("isAdmin", data.isAdmin);
-
-                // 跳转到物料管理首页
                 location.href = "index.html";
             } catch (err) {
                 errorMsg.innerText = "登录失败，请重试！";
             }
         }
 
-        // 按回车也能登录（优化体验）
         document.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-                login();
-            }
+            if (e.key === "Enter") login();
         });
     </script>
 </body>

@@ -22,13 +22,11 @@ public class MaterialController : ControllerBase
         return Ok(result);
     }
 
-    // ✅ 正确获取单条数据（给修改弹窗用）
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         var item = await _materialService.GetByIdAsync(id);
 
-        // ✅ 如果 null，返回 404，前端不会报错
         if (item == null)
         {
             return NotFound(new { code = 404, msg = "物料不存在" });

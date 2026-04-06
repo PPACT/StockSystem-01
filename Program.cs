@@ -23,7 +23,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT 认证（密钥统一 32 位，不报错）
+// JWT 认证
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(opt =>
 {
@@ -33,16 +33,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        // 32位密钥，和 LoginController 一致
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("12345678901234567890123456789012"))
     };
 });
 
-// 数据库连接
+// 数据库
 string conn = @"Server=(localdb)\mssqllocaldb;Database=StockDB;Trusted_Connection=True;TrustServerCertificate=True;";
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(conn));
 
-// 注入你的服务
+// 注入服务
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 
@@ -51,11 +50,9 @@ var app = builder.Build();
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 
-// 认证顺序（必须正确）
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 路由必须在 app.Run() 之前！！！
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("login.html"));
 
@@ -68,5 +65,4 @@ try
 }
 catch { }
 
-// 只留一个 app.Run()！！！
-app.Run(); 
+app.Run();

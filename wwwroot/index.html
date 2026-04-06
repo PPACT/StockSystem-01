@@ -80,18 +80,11 @@
 
         window.onload = load;
 
-        // ==========================
-        // 万能加载方法：不管后端返回结构，都能显示
-        // ==========================
         async function load() {
             try {
                 const res = await fetch(api, { headers });
                 let result = await res.json();
-
-                // 重点：自动兼容数组 / 包裹对象
                 let list = Array.isArray(result) ? result : (result.data ?? result);
-
-                console.log("实际拿到的数据：", list); // 看控制台一定有
 
                 const html = list.map(m => `
                     <tr>
@@ -108,9 +101,8 @@
                     `).join("");
 
                 document.getElementById("list").innerHTML = html;
-            }
-            catch (e) {
-                console.error("加载失败", e);
+            } catch (e) {
+                console.error(e);
                 alert("加载失败：" + e.message);
             }
         }

@@ -6,7 +6,7 @@ namespace StockSystem.Data
     {
         public static void Seed(AppDbContext db)
         {
-            // 啥也不做，防止报错
+            // 空，不执行任何操作，避免报错
         }
     }
 }
