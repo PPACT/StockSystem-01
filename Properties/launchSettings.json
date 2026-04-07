@@ -3,7 +3,7 @@
     "http": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5195/index.html",
+      "launchUrl": "http://localhost:5195/login.html",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
