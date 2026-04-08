@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations; // 必须添加：引用数据注解命名空间
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace StockSystem.Models
 {
@@ -14,7 +14,7 @@ namespace StockSystem.Models
         // 物料编码：最大长度20，必填
         [MaxLength(20, ErrorMessage = "物料编码最长20个字符")]
         [Required(ErrorMessage = "物料编码不能为空")]
-        [RegularExpression(@"^[A-Z0-9]+$", ErrorMessage = "物料编码仅支持大写字母和数字")] // 可选：编码格式约束
+        [RegularExpression(@"^[A-Z0-9]+$", ErrorMessage = "物料编码仅支持大写字母和数字")]
         public string Code { get; set; } = string.Empty;
 
         // 存量：非负整数（可选约束）

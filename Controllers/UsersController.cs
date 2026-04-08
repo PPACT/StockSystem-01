@@ -7,48 +7,48 @@ namespace StockSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MaterialsController : ControllerBase
+    public class UsersController : ControllerBase
     {
-        private readonly IMaterialService _materialService;
+        private readonly IUserService _userService;
 
-        public MaterialsController(IMaterialService materialService)
+        public UsersController(IUserService userService)
         {
-            _materialService = materialService;
+            _userService = userService;
         }
 
         [HttpGet]
         public async Task<ApiResult> GetAll()
         {
-            var list = await _materialService.GetAllMaterialsAsync();
+            var list = await _userService.GetAllUsersAsync();
             return ApiResult.Success(list);
         }
 
         [HttpGet("{id}")]
         public async Task<ApiResult> GetById(int id)
         {
-            var model = await _materialService.GetMaterialByIdAsync(id);
-            if (model == null) return ApiResult.Error("物料不存在");
-            return ApiResult.Success(model);
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null) return ApiResult.Error("用户不存在");
+            return ApiResult.Success(user);
         }
 
         [HttpPost]
-        public async Task<ApiResult> Add(Material material)
+        public async Task<ApiResult> Add(User user)
         {
-            await _materialService.AddMaterialAsync(material);
+            await _userService.AddUserAsync(user);
             return ApiResult.Success(msg: "添加成功");
         }
 
         [HttpPut]
-        public async Task<ApiResult> Update(Material material)
+        public async Task<ApiResult> Update(User user)
         {
-            await _materialService.UpdateMaterialAsync(material);
+            await _userService.UpdateUserAsync(user);
             return ApiResult.Success(msg: "修改成功");
         }
 
         [HttpDelete("{id}")]
         public async Task<ApiResult> Delete(int id)
         {
-            await _materialService.DeleteMaterialAsync(id);
+            await _userService.DeleteUserAsync(id);
             return ApiResult.Success(msg: "删除成功");
         }
     }

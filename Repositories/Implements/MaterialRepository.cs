@@ -1,13 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StockSystem.Models;
-using StockSystem.Repositories.IRepository;
 using StockSystem.Data;
+using StockSystem.Models;
+using StockSystem.Repository.IRepository;
 
-namespace StockSystem.Repositories.Implements
+namespace StockSystem.Repository.Implements
 {
     public class MaterialRepository : IMaterialRepository
     {
-        
         private readonly AppDbContext _db;
 
         public MaterialRepository(AppDbContext db)
@@ -15,36 +14,31 @@ namespace StockSystem.Repositories.Implements
             _db = db;
         }
 
-        
         public async Task<List<Material>> GetAllAsync()
         {
-            return await _db.Materials.ToListAsync<Material>();
-        }
-
-        public async Task AddAsync(Material m)
-        {
-            _db.Materials.Add(m);
-            await _db.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(Material m)
-        {
-            _db.Materials.Update(m);
-            await _db.SaveChangesAsync();
+            return await _db.Materials.ToListAsync();
         }
 
         public async Task<Material?> GetByIdAsync(int id)
         {
-            return await _db.Materials.FindAsync(id);
+            return await _db.Materials.FirstOrDefaultAsync(m => m.Id == id);
         }
 
-        public void Remove(Material m)
+        public async Task AddAsync(Material material)
         {
-            _db.Materials.Remove(m);
+            await _db.Materials.AddAsync(material);
+            await _db.SaveChangesAsync();
         }
 
-        public async Task SaveAsync()
+        public async Task UpdateAsync(Material material)
         {
+            _db.Materials.Update(material);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Material material)
+        {
+            _db.Materials.Remove(material);
             await _db.SaveChangesAsync();
         }
     }

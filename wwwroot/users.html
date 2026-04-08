@@ -2,16 +2,16 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>物料列表测试</title>
+    <title>用户列表测试</title>
 </head>
 <body>
-    <h1>物料列表接口测试</h1>
-    <button onclick="getList()">获取物料列表</button>
+    <h1>用户列表接口测试</h1>
+    <button onclick="getUsers()">获取用户列表</button>
     <pre id="result"></pre>
 
     <script>
-        async function getList() {
-            const res = await fetch('/api/Materials');
+        async function getUsers() {
+            const res = await fetch('/api/Users');
             const data = await res.json();
             document.getElementById('result').innerText = JSON.stringify(data, null, 2);
         }

@@ -1,12 +1,18 @@
-﻿namespace StockSystem.Data;
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StockSystem.Models;
 
-public class AppDbContext : DbContext
+namespace StockSystem.Data
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-    
-    public DbSet<Material> Materials { get; set; }
-    public DbSet<User> Users => Set<User>();
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+
+        // 物料表
+        public DbSet<Material> Materials { get; set; }
+
+        // 用户表
+        public DbSet<User> Users { get; set; }
+    }
 }

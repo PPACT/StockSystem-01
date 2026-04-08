@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StockSystem.Data;
-using StockSystem.Repositories.Implements;
-using StockSystem.Repositories.IRepository;
+using StockSystem.Repository.Implements;
+using StockSystem.Repository.IRepository;
+using StockSystem.Services.Implements;
+using StockSystem.Services.IServices;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +18,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Vue 默认端口
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -42,9 +43,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 string conn = @"Server=(localdb)\mssqllocaldb;Database=StockDB;Trusted_Connection=True;TrustServerCertificate=True;";
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(conn));
 
-// 注入服务
+// ====================== 仓储层注入 ======================
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// ====================== 服务层注入 ======================
 builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
@@ -57,7 +62,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("login.html"));
 
-// 初始化
+// 初始化数据
 try
 {
     using var scope = app.Services.CreateScope();

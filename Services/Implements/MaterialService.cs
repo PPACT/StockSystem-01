@@ -1,67 +1,52 @@
-﻿using StockSystem.Repositories.IRepository;
-using StockSystem.Models;
+﻿using StockSystem.Models;
+using StockSystem.Repository.IRepository;
+using StockSystem.Services.IServices;
 
-public class MaterialService : IMaterialService
+namespace StockSystem.Services.Implements
 {
-    private readonly IMaterialRepository _repo;
-
-    public MaterialService(IMaterialRepository repo)
+    public class MaterialService : IMaterialService
     {
-        _repo = repo;
-    }
+        private readonly IMaterialRepository _materialRepo;
 
-    public async Task<object> GetListAsync()
-    {
-        var list = await _repo.GetAllAsync();
-        return new { code = 200, data = list };
-    }
-
-    // ✅ 安全获取单条，允许返回 null
-    public async Task<Material> GetByIdAsync(int id)
-    {
-        return await _repo.GetByIdAsync(id);
-    }
-
-    public async Task<object> AddAsync(Material model)
-    {
-        await _repo.AddAsync(model);
-        await _repo.SaveAsync();
-        return new { code = 200, msg = "新增成功" };
-    }
-
-    public async Task<object> UpdateAsync(Material model)
-    {
-        // ✅ 查库
-        var exist = await _repo.GetByIdAsync(model.Id);
-
-        // ✅ 防 null 崩溃！
-        if (exist == null)
+        public MaterialService(IMaterialRepository materialRepo)
         {
-            return new { code = 500, msg = "物料不存在" };
+            _materialRepo = materialRepo;
         }
 
-        // ✅ 赋值更新
-        exist.Name = model.Name;
-        exist.Code = model.Code;
-        exist.StockNumber = model.StockNumber;
-        exist.Remark = model.Remark;
-
-        await _repo.UpdateAsync(exist);
-        await _repo.SaveAsync();
-
-        return new { code = 200, msg = "修改成功" };
-    }
-
-    public async Task<object> DeleteAsync(int id)
-    {
-        var item = await _repo.GetByIdAsync(id);
-        if (item == null)
+        public async Task<List<Material>> GetAllMaterialsAsync()
         {
-            return new { code = 500, msg = "不存在" };
+            return await _materialRepo.GetAllAsync();
         }
 
-        _repo.Remove(item);
-        await _repo.SaveAsync();
-        return new { code = 200, msg = "删除成功" };
+        public async Task<Material?> GetMaterialByIdAsync(int id)
+        {
+            return await _materialRepo.GetByIdAsync(id);
+        }
+
+        public async Task AddMaterialAsync(Material material)
+        {
+            if (material == null)
+                throw new ArgumentNullException("物料信息不能为空");
+
+            await _materialRepo.AddAsync(material);
+        }
+
+        public async Task UpdateMaterialAsync(Material material)
+        {
+            var exist = await _materialRepo.GetByIdAsync(material.Id);
+            if (exist == null)
+                throw new KeyNotFoundException("物料不存在");
+
+            await _materialRepo.UpdateAsync(material);
+        }
+
+        public async Task DeleteMaterialAsync(int id)
+        {
+            var material = await _materialRepo.GetByIdAsync(id);
+            if (material == null)
+                throw new KeyNotFoundException("物料不存在，无法删除");
+
+            await _materialRepo.DeleteAsync(material);
+        }
     }
 }

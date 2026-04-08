@@ -11,8 +11,8 @@ using StockSystem.Data;
 namespace StockSystem.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260406043303_Init")]
-    partial class Init
+    [Migration("20260408110635_AddUsersTable")]
+    partial class AddUsersTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,11 +64,13 @@ namespace StockSystem.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
