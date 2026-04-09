@@ -24,10 +24,12 @@ namespace StockSystem.Controllers
             if (user == null)
                 return ApiResult.Error("账号或密码错误");
 
+            // 返回角色，前端就知道是不是管理员
             return ApiResult.Success(new
             {
                 user.Id,
-                user.Username
+                user.Username,
+                user.Role
             }, "登录成功");
         }
     }

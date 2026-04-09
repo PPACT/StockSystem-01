@@ -1,29 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
-using StockSystem.Data;
-using StockSystem.Models;
+﻿using StockSystem.Data;
 
 public static class DbInitializer
 {
     public static void Seed(AppDbContext db)
     {
-        // 强制让 EF 把当前模型同步到数据库（真正能建表）
-        db.Database.Migrate();
+        db.Database.EnsureCreated();
 
-        // 初始化用户
+        // 只有表完全空的时候，才插入默认 admin
         if (!db.Users.Any())
         {
-            db.Users.Add(new User { Username = "admin", Password = "123456" });
-            db.SaveChanges();
-        }
-
-        // 初始化物料
-        if (!db.Materials.Any())
-        {
-            db.Materials.Add(new Material
+            db.Users.Add(new User
             {
-                Name = "测试物料",
-                Code = "TEST001",
-                StockNumber = 100
+                Username = "admin",
+                Password = "123456",
+                Role = "admin"  // 直接标记是管理员
             });
             db.SaveChanges();
         }
