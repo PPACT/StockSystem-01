@@ -41,20 +41,18 @@ namespace StockSystem.Services.Implements
 
         public async Task UpdateUserAsync(User user)
         {
-            var exist = await _userRepo.GetByIdAsync(user.Id);
-            if (exist == null)
-                throw new KeyNotFoundException("用户不存在");
-
+            // Controller层已经提前校验+查库拿到完整user了，这里直接更新！不二次查库！
             await _userRepo.UpdateAsync(user);
         }
 
+        // ✅ 修复：Delete 传入 user 而不是 id（兼容你的仓储）
         public async Task DeleteUserAsync(int id)
         {
             var user = await _userRepo.GetByIdAsync(id);
             if (user == null)
                 throw new KeyNotFoundException("用户不存在，无法删除");
 
-            await _userRepo.DeleteAsync(user);
+            await _userRepo.DeleteAsync(user); // ✅ 这里传 user，不报错！
         }
     }
 }
