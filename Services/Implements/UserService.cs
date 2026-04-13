@@ -45,7 +45,12 @@ namespace StockSystem.Services.Implements
             Console.WriteLine("用户ID: " + user.Id);
             Console.WriteLine("新角色: " + user.Role);
 
-            await _userRepo.UpdateAsync(user);
+            var existUser = await _userRepo.GetByIdAsync(user.Id);
+            if (existUser == null)
+                throw new KeyNotFoundException("用户不存在");
+
+            existUser.Role = user.Role;
+            await _userRepo.UpdateAsync(existUser);
         }
 
         // ✅ 修复：Delete 传入 user 而不是 id（兼容你的仓储）
