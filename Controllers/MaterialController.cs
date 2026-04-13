@@ -1,60 +1,55 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using StockSystem.Common;
 using StockSystem.Models;
-using System.Threading.Tasks;
+using StockSystem.Services.IServices;
 
-[Authorize]
-[ApiController]
-[Route("api/[controller]")]
-public class MaterialController : ControllerBase
+namespace StockSystem.Controllers
 {
-    private readonly IMaterialService _materialService;
-
-    public MaterialController(IMaterialService materialService)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class MaterialsController : ControllerBase
     {
-        _materialService = materialService;
-    }
+        private readonly IMaterialService _materialService;
 
-    [HttpGet]
-    public async Task<IActionResult> GetList()
-    {
-        var result = await _materialService.GetListAsync();
-        return Ok(result);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var item = await _materialService.GetByIdAsync(id);
-
-        if (item == null)
+        public MaterialsController(IMaterialService materialService)
         {
-            return NotFound(new { code = 404, msg = "物料不存在" });
+            _materialService = materialService;
         }
 
-        return Ok(item);
-    }
+        [HttpGet]
+        public async Task<ApiResult> GetAll()
+        {
+            var list = await _materialService.GetAllMaterialsAsync();
+            return ApiResult.Success(list);
+        }
 
-    [HttpPost]
-    public async Task<IActionResult> Add(Material model)
-    {
-        var result = await _materialService.AddAsync(model);
-        return Ok(result);
-    }
+        [HttpGet("{id}")]
+        public async Task<ApiResult> GetById(int id)
+        {
+            var model = await _materialService.GetMaterialByIdAsync(id);
+            if (model == null) return ApiResult.Error("物料不存在");
+            return ApiResult.Success(model);
+        }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Material model)
-    {
-        if (id != model.Id) return BadRequest("参数不匹配");
+        [HttpPost]
+        public async Task<ApiResult> Add(Material material)
+        {
+            await _materialService.AddMaterialAsync(material);
+            return ApiResult.Success(msg: "添加成功");
+        }
 
-        var result = await _materialService.UpdateAsync(model);
-        return Ok(result);
-    }
+        [HttpPut]
+        public async Task<ApiResult> Update(Material material)
+        {
+            await _materialService.UpdateMaterialAsync(material);
+            return ApiResult.Success(msg: "修改成功");
+        }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var result = await _materialService.DeleteAsync(id);
-        return Ok(result);
+        [HttpDelete("{id}")]
+        public async Task<ApiResult> Delete(int id)
+        {
+            await _materialService.DeleteMaterialAsync(id);
+            return ApiResult.Success(msg: "删除成功");
+        }
     }
 }

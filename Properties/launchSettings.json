@@ -3,12 +3,11 @@
     "http": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5195/index.html",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:5195"
+      "applicationUrl": ""
     }
   },
   "$schema": "https://json.schemastore.org/launchsettings.json"
