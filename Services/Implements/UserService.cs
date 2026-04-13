@@ -41,7 +41,10 @@ namespace StockSystem.Services.Implements
 
         public async Task UpdateUserAsync(User user)
         {
-            // Controller层已经提前校验+查库拿到完整user了，这里直接更新！不二次查库！
+            Console.WriteLine("=== Service 更新用户 ===");
+            Console.WriteLine("用户ID: " + user.Id);
+            Console.WriteLine("新角色: " + user.Role);
+
             await _userRepo.UpdateAsync(user);
         }
 

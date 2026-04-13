@@ -20,7 +20,13 @@ namespace StockSystem.Controllers
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ApiResult> Login([FromForm] string username, [FromForm] string password)
         {
+
             var user = await _userService.LoginAsync(username, password);
+
+            // 强制打印，排查是不是控制台坏了
+            Console.WriteLine("===== 登录接口进来了 =====");
+            Console.WriteLine("收到账号：" + username);
+
             if (user == null)
                 return ApiResult.Error("账号或密码错误");
 

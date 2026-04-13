@@ -54,21 +54,30 @@ namespace StockSystem.Controllers
         [HttpPut("{id}")]
         public async Task<ApiResult> Update(int id, [FromBody] User user)
         {
-            // 1. 先查要修改的用户
-            var existUser = await _userService.GetUserByIdAsync(id);
-            if (existUser == null)
-                return ApiResult.Error("用户不存在");
+            Console.WriteLine("=== 后端 Update 接口被调用 ===");
+            Console.WriteLine("路由ID: " + id);
+            Console.WriteLine("前端传过来的 Role: " + user.Role);
 
-            // 2. 禁止修改管理员账号
-            if (existUser.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
-                return ApiResult.Error("管理员账号不可修改");
+            try
+            {
+                var existUser = await _userService.GetUserByIdAsync(id);
+                if (existUser == null)
+                    return ApiResult.Error("用户不存在");
 
-            // 3. 只更新角色，不覆盖其他字段
-            existUser.Role = user.Role;
+                if (existUser.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                    return ApiResult.Error("管理员账号不可修改");
 
-            // 4. 保存修改
-            await _userService.UpdateUserAsync(existUser);
-            return ApiResult.Success(msg: "修改成功");
+                // 🔥 这里正确写法：把前端传的角色赋值给数据库里的用户
+                existUser.Role = user.Role;
+
+                await _userService.UpdateUserAsync(existUser);
+                return ApiResult.Success("修改成功");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("错误: " + ex.Message);
+                return ApiResult.Error("修改失败: " + ex.Message);
+            }
         }
 
         // 删除用户
