@@ -121,5 +121,42 @@ namespace StockSystem.Controllers
             Console.WriteLine($"自测完成：原角色切换为--> {oldUser.Role}");
             return ApiResult.Success("自测更新成功，新角色：" + oldUser.Role);
         }
+
+
+        // 个人设置：修改自己账号密码（核心安全接口）
+        [HttpPut("MyProfile")]
+        public async Task<ApiResult> MyProfile([FromBody] UpdateProfileDto dto)
+        {
+            Console.WriteLine($"【个人设置】用户 {dto.Id} 尝试修改资料");
+
+            // 1. 查数据库获取真实用户（不从前端信任角色）
+            var user = await _userService.GetUserByIdAsync(dto.Id);
+            if (user == null)
+                return ApiResult.Error("用户不存在");
+
+            // 2. 安全规则：admin 账号不允许改名
+            if (user.Username == "admin" && user.Username != dto.Username)
+            {
+                return ApiResult.Error("管理员账号不允许修改名称");
+            }
+
+            // 3. 禁止任何人把账号改成 admin
+            if (dto.Username == "admin" && user.Username != "admin")
+            {
+                return ApiResult.Error("不允许设置为管理员账号");
+            }
+
+            // 4. 只修改允许的字段
+            user.Username = dto.Username;
+
+            // 5. 密码不为空才修改
+            if (!string.IsNullOrEmpty(dto.Password))
+            {
+                user.Password = dto.Password;
+            }
+
+            await _userService.UpdateUserAsync(user);
+            return ApiResult.Success("保存成功");
+        }
     }
 }
