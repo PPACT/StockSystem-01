@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using StockSystem.Common;
+using StockSystem.Data;
 using StockSystem.Models;
-using StockSystem.Services.IServices;
 
 namespace StockSystem.Controllers
 {
@@ -9,47 +10,56 @@ namespace StockSystem.Controllers
     [ApiController]
     public class MaterialsController : ControllerBase
     {
-        private readonly IMaterialService _materialService;
+        private readonly AppDbContext _db;
 
-        public MaterialsController(IMaterialService materialService)
+        public MaterialsController(AppDbContext db)
         {
-            _materialService = materialService;
+            _db = db;
         }
 
+        // 列表
         [HttpGet]
-        public async Task<ApiResult> GetAll()
+        public async Task<ApiResult> GetList()
         {
-            var list = await _materialService.GetAllMaterialsAsync();
+            var list = await _db.Materials.ToListAsync();
             return ApiResult.Success(list);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ApiResult> GetById(int id)
-        {
-            var model = await _materialService.GetMaterialByIdAsync(id);
-            if (model == null) return ApiResult.Error("物料不存在");
-            return ApiResult.Success(model);
-        }
-
+        // 新增
         [HttpPost]
-        public async Task<ApiResult> Add(Material material)
+        public async Task<ApiResult> Add([FromBody] Material material)
         {
-            await _materialService.AddMaterialAsync(material);
-            return ApiResult.Success(msg: "添加成功");
+            _db.Materials.Add(material);
+            await _db.SaveChangesAsync();
+            return ApiResult.Success("添加成功");
         }
 
-        [HttpPut]
-        public async Task<ApiResult> Update(Material material)
+        // 修改
+        [HttpPut("{id}")]
+        public async Task<ApiResult> Update(int id, [FromBody] Material material)
         {
-            await _materialService.UpdateMaterialAsync(material);
-            return ApiResult.Success(msg: "修改成功");
+            var item = await _db.Materials.FindAsync(id);
+            if (item == null) return ApiResult.Error("物料不存在");
+
+            item.Name = material.Name;
+            item.Code = material.Code;
+            item.StockNumber = material.StockNumber;
+            item.Remark = material.Remark;
+
+            await _db.SaveChangesAsync();
+            return ApiResult.Success("修改成功");
         }
 
+        // 删除
         [HttpDelete("{id}")]
         public async Task<ApiResult> Delete(int id)
         {
-            await _materialService.DeleteMaterialAsync(id);
-            return ApiResult.Success(msg: "删除成功");
+            var item = await _db.Materials.FindAsync(id);
+            if (item == null) return ApiResult.Error("物料不存在");
+
+            _db.Materials.Remove(item);
+            await _db.SaveChangesAsync();
+            return ApiResult.Success("删除成功");
         }
     }
 }
