@@ -3,16 +3,7 @@
 public class User
 {
     public int Id { get; set; }
-
-    [Required(ErrorMessage = "账号不能为空")]
-    [MaxLength(20)]
-    public string Username { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "密码不能为空")]
-    [MaxLength(20)]
-    public string Password { get; set; } = string.Empty;
-
-    // 角色：admin / user
-    [MaxLength(20)]
-    public string Role { get; set; } = "user";
+    public string Username { get; set; } = string.Empty; // 账号不可空
+    public string? Password { get; set; } // 密码可空，解决400
+    public string Role { get; set; } = "user"; // 角色不可空，默认普通用户
 }

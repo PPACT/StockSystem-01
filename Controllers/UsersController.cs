@@ -93,6 +93,7 @@ namespace StockSystem.Controllers
 
 
         // 临时测试用：写死ID切换角色，不用前端，排查底层更新能不能连库生效
+        /*
         [HttpGet("TestUpdateRole")]
         public async Task<ApiResult> TestUpdateRole()
         {
@@ -121,41 +122,46 @@ namespace StockSystem.Controllers
             Console.WriteLine($"自测完成：原角色切换为--> {oldUser.Role}");
             return ApiResult.Success("自测更新成功，新角色：" + oldUser.Role);
         }
+        */
 
 
         // 个人设置：修改自己账号密码（核心安全接口）
         [HttpPut("MyProfile")]
-        public async Task<ApiResult> MyProfile([FromBody] UpdateProfileDto dto)
+        public async Task<ApiResult> MyProfile([FromBody] User user)
         {
-            Console.WriteLine($"【个人设置】用户 {dto.Id} 尝试修改资料");
+            Console.WriteLine($"【个人设置-完整User绑定】收到请求：Id={user.Id}, Username={user.Username}, Role={user.Role}, Password={(user.Password ?? "空")}");
 
-            // 1. 查数据库获取真实用户（不从前端信任角色）
-            var user = await _userService.GetUserByIdAsync(dto.Id);
-            if (user == null)
+            // 1. 查数据库，获取真实的用户信息（核心安全校验）
+            var existUser = await _userService.GetUserByIdAsync(user.Id);
+            if (existUser == null)
                 return ApiResult.Error("用户不存在");
 
-            // 2. 安全规则：admin 账号不允许改名
-            if (user.Username == "admin" && user.Username != dto.Username)
+            // 2. 安全规则1：admin 账号禁止修改名称
+            if (existUser.Username == "admin" && existUser.Username != user.Username)
             {
                 return ApiResult.Error("管理员账号不允许修改名称");
             }
 
-            // 3. 禁止任何人把账号改成 admin
-            if (dto.Username == "admin" && user.Username != "admin")
+            // 3. 安全规则2：禁止任何人把账号改成 admin
+            if (user.Username == "admin" && existUser.Username != "admin")
             {
                 return ApiResult.Error("不允许设置为管理员账号");
             }
 
-            // 4. 只修改允许的字段
-            user.Username = dto.Username;
+            // 4. 只修改允许的字段：Username、Password（Role 坚决不修改！）
+            existUser.Username = user.Username;
 
-            // 5. 密码不为空才修改
-            if (!string.IsNullOrEmpty(dto.Password))
+            // 5. 只有密码非空时，才修改密码（空=不修改）
+            if (!string.IsNullOrEmpty(user.Password))
             {
-                user.Password = dto.Password;
+                existUser.Password = user.Password;
             }
 
-            await _userService.UpdateUserAsync(user);
+            // 6. Role 不赋值，保持数据库里的旧值，彻底杜绝前端篡改权限
+            // existUser.Role = user.Role; ❌ 绝对不要写！
+
+            // 7. 保存到数据库
+            await _userService.UpdateUserAsync(existUser);
             return ApiResult.Success("保存成功");
         }
     }
