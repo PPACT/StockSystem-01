@@ -13,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// ====================== 🔥 加这里：Swagger 生成文档 ======================
+builder.Services.AddSwaggerGen();
+
 // 跨域
 builder.Services.AddCors(options =>
 {
@@ -52,6 +55,18 @@ builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
+
+// ====================== 🔥 加这里：启用 Swagger ======================
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        // 访问地址：http://localhost:5000/swagger
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "库存管理系统 API");
+        c.RoutePrefix = "swagger"; // 文档路径
+    });
+}
 
 app.UseStaticFiles();
 app.UseCors("AllowAll");

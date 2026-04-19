@@ -17,7 +17,7 @@ namespace StockSystem.Controllers
             _db = db;
         }
 
-        // 列表
+        // 原有列表（保留不动）
         [HttpGet]
         public async Task<ApiResult> GetList()
         {
@@ -25,7 +25,42 @@ namespace StockSystem.Controllers
             return ApiResult.Success(list);
         }
 
-        // 新增
+        // ==================== 新增：分页 + 搜索 ====================
+        [HttpGet("page")]
+        public async Task<ApiResult> GetPage(
+            int pageIndex = 1,
+            int pageSize = 10,
+            string? name = null,
+            string? code = null)
+        {
+            // 1. 基础查询
+            var query = _db.Materials.AsQueryable();
+
+            // 2. 条件搜索
+            if (!string.IsNullOrEmpty(name))
+                query = query.Where(m => m.Name.Contains(name));
+
+            if (!string.IsNullOrEmpty(code))
+                query = query.Where(m => m.Code.Contains(code));
+
+            // 3. 总数
+            var total = await query.CountAsync();
+
+            // 4. 分页
+            var data = await query
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 5. 返回分页格式
+            return ApiResult.Success(new PagedResult<Material>
+            {
+                List = data,
+                Total = total
+            });
+        }
+
+        // 原有新增（不动）
         [HttpPost]
         public async Task<ApiResult> Add([FromBody] Material material)
         {
@@ -34,7 +69,7 @@ namespace StockSystem.Controllers
             return ApiResult.Success("添加成功");
         }
 
-        // 修改
+        // 原有修改（不动）
         [HttpPut("{id}")]
         public async Task<ApiResult> Update(int id, [FromBody] Material material)
         {
@@ -50,7 +85,7 @@ namespace StockSystem.Controllers
             return ApiResult.Success("修改成功");
         }
 
-        // 删除
+        // 原有删除（不动）
         [HttpDelete("{id}")]
         public async Task<ApiResult> Delete(int id)
         {
