@@ -24,7 +24,6 @@ namespace StockSystem.Controllers
             return ApiResult.Success(list);
         }
 
-        // 新增：用户分页+搜索接口
         [HttpGet("page")]
         public async Task<ApiResult> GetPage(
             int pageIndex = 1,
@@ -62,6 +61,11 @@ namespace StockSystem.Controllers
         {
             if (user.Username.Equals("admin", System.StringComparison.OrdinalIgnoreCase))
                 return ApiResult.Error("禁止注册管理员账号");
+
+            // 🔥 唯一性校验：用户名不能重复
+            var existUser = await _userService.GetUserByUsernameAsync(user.Username);
+            if (existUser != null)
+                return ApiResult.Error("用户名已存在，请更换");
 
             await _userService.AddUserAsync(user);
             return ApiResult.Success(msg: "添加成功");
@@ -110,17 +114,20 @@ namespace StockSystem.Controllers
             if (user.Username == "admin" && existUser.Username != "admin")
                 return ApiResult.Error("不允许设置为管理员账号");
 
+            // 🔥 校验：不能改成别人已用的用户名
+            var sameNameUser = await _userService.GetUserByUsernameAsync(user.Username);
+            if (sameNameUser != null && sameNameUser.Id != user.Id)
+                return ApiResult.Error("用户名已被其他账号占用");
+
             existUser.Username = user.Username;
 
             if (!string.IsNullOrEmpty(user.Password))
             {
-                existUser.Password = user.Password; // 会在 UpdateUserAsync 里自动加密
+                existUser.Password = user.Password;
             }
 
             await _userService.UpdateUserAsync(existUser);
             return ApiResult.Success("保存成功");
         }
-
-        
     }
 }

@@ -17,7 +17,6 @@ namespace StockSystem.Controllers
             _db = db;
         }
 
-        // 原有列表（保留不动）
         [HttpGet]
         public async Task<ApiResult> GetList()
         {
@@ -25,7 +24,6 @@ namespace StockSystem.Controllers
             return ApiResult.Success(list);
         }
 
-        // ==================== 新增：分页 + 搜索 ====================
         [HttpGet("page")]
         public async Task<ApiResult> GetPage(
             int pageIndex = 1,
@@ -33,26 +31,20 @@ namespace StockSystem.Controllers
             string? name = null,
             string? code = null)
         {
-            // 1. 基础查询
             var query = _db.Materials.AsQueryable();
 
-            // 2. 条件搜索
             if (!string.IsNullOrEmpty(name))
                 query = query.Where(m => m.Name.Contains(name));
 
             if (!string.IsNullOrEmpty(code))
                 query = query.Where(m => m.Code.Contains(code));
 
-            // 3. 总数
             var total = await query.CountAsync();
-
-            // 4. 分页
             var data = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            // 5. 返回分页格式
             return ApiResult.Success(new PagedResult<Material>
             {
                 List = data,
@@ -60,21 +52,29 @@ namespace StockSystem.Controllers
             });
         }
 
-        // 原有新增（不动）
         [HttpPost]
         public async Task<ApiResult> Add([FromBody] Material material)
         {
+            // 🔥 校验：物料编码不能重复
+            var existCode = await _db.Materials.AnyAsync(m => m.Code == material.Code);
+            if (existCode)
+                return ApiResult.Error("物料编码已存在，请更换");
+
             _db.Materials.Add(material);
             await _db.SaveChangesAsync();
             return ApiResult.Success("添加成功");
         }
 
-        // 原有修改（不动）
         [HttpPut("{id}")]
         public async Task<ApiResult> Update(int id, [FromBody] Material material)
         {
             var item = await _db.Materials.FindAsync(id);
             if (item == null) return ApiResult.Error("物料不存在");
+
+            // 🔥 校验：不能改成别人已用的编码
+            var existCode = await _db.Materials.AnyAsync(m => m.Code == material.Code && m.Id != id);
+            if (existCode)
+                return ApiResult.Error("物料编码已被其他物料占用");
 
             item.Name = material.Name;
             item.Code = material.Code;
@@ -85,7 +85,6 @@ namespace StockSystem.Controllers
             return ApiResult.Success("修改成功");
         }
 
-        // 原有删除（不动）
         [HttpDelete("{id}")]
         public async Task<ApiResult> Delete(int id)
         {
