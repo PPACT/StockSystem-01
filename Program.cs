@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StockSystem.Common;
 using StockSystem.Data;
 using StockSystem.Repository.Implements;
 using StockSystem.Repository.IRepository;
@@ -10,7 +11,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
 builder.Services.AddEndpointsApiExplorer();
 
 // ====================== 🔥 加这里：Swagger 生成文档 ======================
