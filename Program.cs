@@ -11,16 +11,19 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. 控制器 + 全局配置
 builder.Services.AddControllers(options =>
 {
-    options.Filters.Add<GlobalExceptionFilter>();
+    options.Filters.Add<GlobalExceptionFilter>(); // 全局异常
 });
 builder.Services.AddEndpointsApiExplorer();
 
-// ====================== 🔥 加这里：Swagger 生成文档 ======================
+// ======================================================
+// 2. Swagger API 文档
 builder.Services.AddSwaggerGen();
 
-// 跨域
+// ======================================================
+// 3. 跨域配置
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -32,7 +35,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT 认证
+// ======================================================
+// 4. JWT 身份验证 【已规范化】
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(opt =>
 {
@@ -42,39 +46,50 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("12345678901234567890123456789012"))
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes("12345678901234567890123456789012")
+)
     };
 });
 
-// 数据库
+// ======================================================
+// 5. 数据库上下文
 string conn = @"Server=(localdb)\mssqllocaldb;Database=StockDB;Trusted_Connection=True;TrustServerCertificate=True;";
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(conn));
 
-// ====================== 仓储层注入 ======================
+// ======================================================
+// 6. 注册 JWT 工具类
+builder.Services.AddScoped<JwtHelper>();
+
+// ======================================================
+// 7. 仓储层注入
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-// ====================== 服务层注入 ======================
+// ======================================================
+// 8. 服务层注入
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// ======================================================
+// 9. 应用启动配置
 var app = builder.Build();
 
-// ====================== 🔥 加这里：启用 Swagger ======================
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        // 访问地址：http://localhost:5000/swagger
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "库存管理系统 API");
-        c.RoutePrefix = "swagger"; // 文档路径
+        c.RoutePrefix = "swagger";
     });
 }
 
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 
+// 认证 & 授权 【顺序不能变】
 app.UseAuthentication();
 app.UseAuthorization();
 

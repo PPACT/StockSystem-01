@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StockSystem.Common;
 using StockSystem.Models;
 using StockSystem.Models.Dto;
@@ -6,6 +7,7 @@ using StockSystem.Services.IServices;
 
 namespace StockSystem.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase

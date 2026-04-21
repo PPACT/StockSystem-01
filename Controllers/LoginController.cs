@@ -9,10 +9,12 @@ namespace StockSystem.Controllers
     public class LoginController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly JwtHelper _jwtHelper;
 
-        public LoginController(IUserService userService)
+        public LoginController(IUserService userService, JwtHelper jwtHelper)
         {
             _userService = userService;
+            _jwtHelper = jwtHelper;
         }
 
         [HttpPost]
@@ -23,11 +25,15 @@ namespace StockSystem.Controllers
             if (user == null)
                 return ApiResult.Error("账号或密码错误");
 
+            // 生成 JWT Token
+            var token = _jwtHelper.GenerateToken(user);
+
             return ApiResult.Success(new
             {
                 user.Id,
                 user.Username,
-                user.Role
+                user.Role,
+                token  // 👈 这里返回 Token 给前端
             }, "登录成功");
         }
     }
