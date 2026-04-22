@@ -9,7 +9,19 @@ using StockSystem.Services.Implements;
 using StockSystem.Services.IServices;
 using System.Text;
 
+// 🔥 1. 先加这一句（必须在最顶部）
+using Serilog;
+
+// 🔥 2. 配置 Serilog（放在 var builder = ... 之前）
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+// 🔥 3. 使用 Serilog（必须在 Build 之前）
+builder.Host.UseSerilog();
 
 // 1. 控制器 + 全局配置
 builder.Services.AddControllers(options =>
@@ -48,7 +60,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes("12345678901234567890123456789012")
-)
+        )
     };
 });
 
@@ -92,6 +104,9 @@ app.UseCors("AllowAll");
 // 认证 & 授权 【顺序不能变】
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🔥 4. 启用 Serilog 请求日志（放在中间件最后，Run 之前）
+app.UseSerilogRequestLogging();
 
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("login.html"));
