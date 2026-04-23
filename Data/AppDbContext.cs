@@ -14,5 +14,8 @@ namespace StockSystem.Data
 
         // 用户表
         public DbSet<User> Users { get; set; }
+
+        // 库存日志表
+        public DbSet<StockLog> StockLogs { get; set; }
     }
 }

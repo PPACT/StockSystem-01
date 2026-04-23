@@ -80,7 +80,7 @@ namespace StockSystem.Controllers
 
             item.Name = material.Name;
             item.Code = material.Code;
-            item.StockNumber = material.StockNumber;
+            // item.StockNumber = material.StockNumber; 👈 👈 只注释这一行！
             item.Remark = material.Remark;
 
             await _db.SaveChangesAsync();
