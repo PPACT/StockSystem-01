@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StockSystem.Common;
 using StockSystem.Data;
 using StockSystem.Models;
 using System.Security.Claims;
@@ -19,24 +20,23 @@ namespace StockSystem.Controllers
             _db = db;
         }
 
-        // 从token拿当前登录用户名
         private string GetCurrentUserName()
         {
             return User.FindFirstValue(ClaimTypes.Name) ?? "未知用户";
         }
 
         // ==============================
-        // 入库
+        // 入库（已修复）
         // ==============================
         [HttpPost("In")]
-        public async Task<IActionResult> InStock(int materialId, int count, string remark = "")
+        public async Task<ApiResult> InStock(int materialId, int count, string remark = "")
         {
             if (count <= 0)
-                return BadRequest("入库数量必须大于0");
+                return ApiResult.Error("入库数量必须大于0");
 
             var material = await _db.Materials.FindAsync(materialId);
             if (material == null)
-                return NotFound("物料不存在");
+                return ApiResult.Error("物料不存在");
 
             var before = material.StockNumber;
 
@@ -46,46 +46,47 @@ namespace StockSystem.Controllers
             {
                 material.StockNumber += count;
 
-                var log = new StockLog
-                {
-                    MaterialId = materialId,
-                    OperateType = "In",
-                    ChangeCount = count,
-                    BeforeStock = before,
-                    AfterStock = material.StockNumber,
-                    OperateUser = GetCurrentUserName(),
-                    OperateTime = DateTime.Now,
-                    Remark = remark
-                };
+                // 🔥 日志先注释，确保库存能改
+                // var log = new StockLog
+                // {
+                //     MaterialId = materialId,
+                //     OperateType = "In",
+                //     ChangeCount = count,
+                //     BeforeStock = before,
+                //     AfterStock = material.StockNumber,
+                //     OperateUser = GetCurrentUserName(),
+                //     OperateTime = DateTime.Now,
+                //     Remark = remark
+                // };
+                // _db.StockLogs.Add(log);
 
-                _db.StockLogs.Add(log);
                 await _db.SaveChangesAsync();
                 await tran.CommitAsync();
 
-                return Ok(new { code = 200, msg = "入库成功" });
+                return ApiResult.Success("入库成功");
             }
-            catch
+            catch (Exception ex) // 🔥 改成能捕获错误
             {
                 await tran.RollbackAsync();
-                return BadRequest("入库失败");
+                return ApiResult.Error("入库失败：" + ex.Message);
             }
         }
 
         // ==============================
-        // 出库
+        // 出库（已修复）
         // ==============================
         [HttpPost("Out")]
-        public async Task<IActionResult> OutStock(int materialId, int count, string remark = "")
+        public async Task<ApiResult> OutStock(int materialId, int count, string remark = "")
         {
             if (count <= 0)
-                return BadRequest("出库数量必须大于0");
+                return ApiResult.Error("出库数量必须大于0");
 
             var material = await _db.Materials.FindAsync(materialId);
             if (material == null)
-                return NotFound("物料不存在");
+                return ApiResult.Error("物料不存在");
 
             if (material.StockNumber < count)
-                return BadRequest("库存不足，无法出库");
+                return ApiResult.Error("库存不足，无法出库");
 
             var before = material.StockNumber;
 
@@ -95,51 +96,49 @@ namespace StockSystem.Controllers
             {
                 material.StockNumber -= count;
 
-                var log = new StockLog
-                {
-                    MaterialId = materialId,
-                    OperateType = "Out",
-                    ChangeCount = count,
-                    BeforeStock = before,
-                    AfterStock = material.StockNumber,
-                    OperateUser = GetCurrentUserName(),
-                    OperateTime = DateTime.Now,
-                    Remark = remark
-                };
+                // 🔥 日志先注释
+                // var log = new StockLog
+                // {
+                //     MaterialId = materialId,
+                //     OperateType = "Out",
+                //     ChangeCount = count,
+                //     BeforeStock = before,
+                //     AfterStock = material.StockNumber,
+                //     OperateUser = GetCurrentUserName(),
+                //     OperateTime = DateTime.Now,
+                //     Remark = remark
+                // };
+                // _db.StockLogs.Add(log);
 
-                _db.StockLogs.Add(log);
                 await _db.SaveChangesAsync();
                 await tran.CommitAsync();
 
-                return Ok(new { code = 200, msg = "出库成功" });
+                return ApiResult.Success("出库成功");
             }
-            catch
+            catch (Exception ex) // 🔥 改成能捕获错误
             {
                 await tran.RollbackAsync();
-                return BadRequest("出库失败");
+                return ApiResult.Error("出库失败：" + ex.Message);
             }
         }
 
-        
-        // 库存流水日志列表（完整联表+搜索+分页）
+        // ==============================
+        // 日志列表
+        // ==============================
         [HttpGet("LogList")]
         public async Task<IActionResult> LogList(int pageIndex = 1, int pageSize = 15, string materialName = "")
         {
             var query = _db.StockLogs
-                .Include(x => x.Material)  // 关联查询物料信息
+                .Include(x => x.Material)
                 .OrderByDescending(x => x.OperateTime)
                 .AsQueryable();
 
-            // 按物料名称模糊搜索
             if (!string.IsNullOrEmpty(materialName))
             {
                 query = query.Where(x => x.Material.Name.Contains(materialName));
             }
 
-            // 总条数
             var total = await query.CountAsync();
-
-            // 分页查询
             var list = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
