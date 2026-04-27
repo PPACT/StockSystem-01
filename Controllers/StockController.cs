@@ -15,9 +15,9 @@ namespace StockSystem.Controllers
     {
         private readonly AppDbContext _db;
 
-        public StockController(AppDbContext db)
+        public StockController(AppDbContext _db)
         {
-            _db = db;
+            this._db = _db;
         }
 
         private string GetCurrentUserName()
@@ -25,9 +25,6 @@ namespace StockSystem.Controllers
             return User.FindFirstValue(ClaimTypes.Name) ?? "未知用户";
         }
 
-        // ==============================
-        // 入库（已修复）
-        // ==============================
         [HttpPost("In")]
         public async Task<ApiResult> InStock(int materialId, int count, string remark = "")
         {
@@ -40,41 +37,40 @@ namespace StockSystem.Controllers
 
             var before = material.StockNumber;
 
+            // 开启事务
             using var tran = await _db.Database.BeginTransactionAsync();
 
             try
             {
+                // 修改库存
                 material.StockNumber += count;
 
-                // 🔥 日志先注释，确保库存能改
-                // var log = new StockLog
-                // {
-                //     MaterialId = materialId,
-                //     OperateType = "In",
-                //     ChangeCount = count,
-                //     BeforeStock = before,
-                //     AfterStock = material.StockNumber,
-                //     OperateUser = GetCurrentUserName(),
-                //     OperateTime = DateTime.Now,
-                //     Remark = remark
-                // };
-                // _db.StockLogs.Add(log);
+                // 写入库存日志
+                var log = new StockLog
+                {
+                    MaterialId = materialId,
+                    OperateType = "In",
+                    ChangeCount = count,
+                    BeforeStock = before,
+                    AfterStock = material.StockNumber,
+                    OperateUser = GetCurrentUserName(),
+                    OperateTime = DateTime.Now,
+                    Remark = remark
+                };
 
+                _db.StockLogs.Add(log);
                 await _db.SaveChangesAsync();
                 await tran.CommitAsync();
 
                 return ApiResult.Success("入库成功");
             }
-            catch (Exception ex) // 🔥 改成能捕获错误
+            catch (Exception ex)
             {
                 await tran.RollbackAsync();
                 return ApiResult.Error("入库失败：" + ex.Message);
             }
         }
 
-        // ==============================
-        // 出库（已修复）
-        // ==============================
         [HttpPost("Out")]
         public async Task<ApiResult> OutStock(int materialId, int count, string remark = "")
         {
@@ -90,41 +86,40 @@ namespace StockSystem.Controllers
 
             var before = material.StockNumber;
 
+            // 开启事务
             using var tran = await _db.Database.BeginTransactionAsync();
 
             try
             {
+                // 修改库存
                 material.StockNumber -= count;
 
-                // 🔥 日志先注释
-                // var log = new StockLog
-                // {
-                //     MaterialId = materialId,
-                //     OperateType = "Out",
-                //     ChangeCount = count,
-                //     BeforeStock = before,
-                //     AfterStock = material.StockNumber,
-                //     OperateUser = GetCurrentUserName(),
-                //     OperateTime = DateTime.Now,
-                //     Remark = remark
-                // };
-                // _db.StockLogs.Add(log);
+                // 写入库存日志
+                var log = new StockLog
+                {
+                    MaterialId = materialId,
+                    OperateType = "Out",
+                    ChangeCount = count,
+                    BeforeStock = before,
+                    AfterStock = material.StockNumber,
+                    OperateUser = GetCurrentUserName(),
+                    OperateTime = DateTime.Now,
+                    Remark = remark
+                };
 
+                _db.StockLogs.Add(log);
                 await _db.SaveChangesAsync();
                 await tran.CommitAsync();
 
                 return ApiResult.Success("出库成功");
             }
-            catch (Exception ex) // 🔥 改成能捕获错误
+            catch (Exception ex)
             {
                 await tran.RollbackAsync();
                 return ApiResult.Error("出库失败：" + ex.Message);
             }
         }
 
-        // ==============================
-        // 日志列表
-        // ==============================
         [HttpGet("LogList")]
         public async Task<IActionResult> LogList(int pageIndex = 1, int pageSize = 15, string materialName = "")
         {
