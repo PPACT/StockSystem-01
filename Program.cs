@@ -8,11 +8,9 @@ using StockSystem.Repository.IRepository;
 using StockSystem.Services.Implements;
 using StockSystem.Services.IServices;
 using System.Text;
-
-// 🔥 1. 先加这一句（必须在最顶部）
 using Serilog;
 
-// 🔥 2. 配置 Serilog（放在 var builder = ... 之前）
+// 日志配置
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
@@ -20,22 +18,31 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔥 3. 使用 Serilog（必须在 Build 之前）
+// JWT 密钥解析（环境变量优先，配置文件兜底）
+// Docker:  docker run -e JWT_SECRET="xxx"
+// 本地开发: 在 appsettings.Development.json 中配置 Jwt:SecretKey
+string jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+                   ?? builder.Configuration["Jwt:SecretKey"];
+if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Length < 16)
+    throw new InvalidOperationException(
+        "JWT 密钥未配置或长度不足。请设置环境变量 JWT_SECRET（至少 16 字符），" +
+        "或在 appsettings.Development.json 中配置 Jwt:SecretKey。");
+builder.Configuration["Jwt:SecretKey"] = jwtSecret;
+
+// 使用Serilog
 builder.Host.UseSerilog();
 
-// 1. 控制器 + 全局配置
+// 控制器 + 全局异常
 builder.Services.AddControllers(options =>
 {
-    options.Filters.Add<GlobalExceptionFilter>(); // 全局异常
+    options.Filters.Add<GlobalExceptionFilter>();
 });
 builder.Services.AddEndpointsApiExplorer();
 
-// ======================================================
-// 2. Swagger API 文档
+// Swagger
 builder.Services.AddSwaggerGen();
 
-// ======================================================
-// 3. 跨域配置
+// 跨域
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -47,8 +54,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ======================================================
-// 4. JWT 身份验证 【已规范化】
+// JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(opt =>
 {
@@ -59,32 +65,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes("12345678901234567890123456789012")
+            Encoding.UTF8.GetBytes(jwtSecret)
         )
     };
 });
 
 // ======================================================
 // 5. 数据库上下文
-string conn = @"Server=(localdb)\mssqllocaldb;Database=StockDB;Trusted_Connection=True;TrustServerCertificate=True;";
+// 优先从环境变量读取（Docker 环境），否则使用本地 LocalDB
+string conn = Environment.GetEnvironmentVariable("CONNECTION_STRING")
+              ?? @"Server=(localdb)\mssqllocaldb;Database=StockDB;Trusted_Connection=True;TrustServerCertificate=True;";
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(conn));
 
-// ======================================================
-// 6. 注册 JWT 工具类
+// 工具类
 builder.Services.AddScoped<JwtHelper>();
 
-// ======================================================
-// 7. 仓储层注入
+// 仓储
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-// ======================================================
-// 8. 服务层注入
+// 服务
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// ======================================================
-// 9. 应用启动配置
 var app = builder.Build();
 
 // Swagger
@@ -101,11 +104,8 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 
-// 认证 & 授权 【顺序不能变】
 app.UseAuthentication();
 app.UseAuthorization();
-
-// 🔥 4. 启用 Serilog 请求日志（放在中间件最后，Run 之前）
 app.UseSerilogRequestLogging();
 
 app.MapControllers();
@@ -118,6 +118,9 @@ try
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     DbInitializer.Seed(db);
 }
-catch { }
+catch (Exception ex)
+{
+    Log.Error(ex, "数据库初始化失败");
+}
 
 app.Run();

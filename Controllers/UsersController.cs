@@ -64,7 +64,6 @@ namespace StockSystem.Controllers
             if (user.Username.Equals("admin", System.StringComparison.OrdinalIgnoreCase))
                 return ApiResult.Error("禁止注册管理员账号");
 
-            // 🔥 唯一性校验：用户名不能重复
             var existUser = await _userService.GetUserByUsernameAsync(user.Username);
             if (existUser != null)
                 return ApiResult.Error("用户名已存在，请更换");
@@ -116,13 +115,13 @@ namespace StockSystem.Controllers
             if (user.Username == "admin" && existUser.Username != "admin")
                 return ApiResult.Error("不允许设置为管理员账号");
 
-            // 🔥 校验：不能改成别人已用的用户名
             var sameNameUser = await _userService.GetUserByUsernameAsync(user.Username);
             if (sameNameUser != null && sameNameUser.Id != user.Id)
                 return ApiResult.Error("用户名已被其他账号占用");
 
             existUser.Username = user.Username;
 
+            // ✅ 允许密码为空，不修改密码
             if (!string.IsNullOrEmpty(user.Password))
             {
                 existUser.Password = user.Password;

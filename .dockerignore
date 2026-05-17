@@ -1,0 +1,15 @@
+**/bin
+**/obj
+**/logs
+**/.vs
+**/.git
+**/.gitignore
+**/.gitattributes
+*.md
+*.sql
+TextFile.txt
+*.template.json
+.env
+.env.*
+secrets.*
+*.pem

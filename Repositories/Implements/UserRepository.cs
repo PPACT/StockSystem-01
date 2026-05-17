@@ -24,12 +24,6 @@ namespace StockSystem.Repository.Implements
             return await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<User?> LoginAsync(string username, string password)
-        {
-            return await _db.Users
-                .FirstOrDefaultAsync(u => u.Username == username && u.Password == password);
-        }
-
         public async Task AddAsync(User user)
         {
             await _db.Users.AddAsync(user);

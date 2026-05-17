@@ -1,11 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-public class User
+namespace StockSystem.Models
 {
-    public int Id { get; set; }
-    public string Username { get; set; } = string.Empty; // 账号不可空
+    public class User
+    {
+        public int Id { get; set; }
 
-    [MaxLength(255)]
-    public string? Password { get; set; } = string.Empty;
-    public string Role { get; set; } = "user"; // 角色不可空，默认普通用户
+        [Required(ErrorMessage = "账号不能为空")]
+        [MaxLength(20, ErrorMessage = "账号最长20字符")]
+        public string Username { get; set; } = string.Empty;
+
+        [MaxLength(255)]
+        public string? Password { get; set; } = string.Empty;
+
+        [MaxLength(10)]
+        public string Role { get; set; } = "user";
+    }
 }

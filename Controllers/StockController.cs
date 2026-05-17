@@ -5,6 +5,7 @@ using StockSystem.Common;
 using StockSystem.Data;
 using StockSystem.Models;
 using System.Security.Claims;
+using System.Text;
 
 namespace StockSystem.Controllers
 {
@@ -120,17 +121,31 @@ namespace StockSystem.Controllers
             }
         }
 
+        /// <summary>
+        /// 日志列表（支持 物料名 + 操作类型筛选）
+        /// </summary>
         [HttpGet("LogList")]
-        public async Task<IActionResult> LogList(int pageIndex = 1, int pageSize = 15, string materialName = "")
+        public async Task<IActionResult> LogList(
+            int pageIndex = 1,
+            int pageSize = 15,
+            string materialName = "",
+            string? operateType = null)
         {
             var query = _db.StockLogs
                 .Include(x => x.Material)
                 .OrderByDescending(x => x.OperateTime)
                 .AsQueryable();
 
+            // 物料名称筛选
             if (!string.IsNullOrEmpty(materialName))
             {
-                query = query.Where(x => x.Material.Name.Contains(materialName));
+                query = query.Where(x => x.Material!.Name.Contains(materialName));
+            }
+
+            // 出入库类型筛选
+            if (!string.IsNullOrEmpty(operateType))
+            {
+                query = query.Where(x => x.OperateType == operateType);
             }
 
             var total = await query.CountAsync();
@@ -140,6 +155,36 @@ namespace StockSystem.Controllers
                 .ToListAsync();
 
             return Ok(new { code = 200, data = list, total });
+        }
+
+        /// <summary>
+        /// 导出库存日志 Excel
+        /// </summary>
+        [HttpGet("ExportLog")]
+        public async Task<IActionResult> ExportLog(string materialName = "", string? operateType = null)
+        {
+            var query = _db.StockLogs.Include(x => x.Material).AsQueryable();
+
+            if (!string.IsNullOrEmpty(materialName))
+                query = query.Where(x => x.Material!.Name.Contains(materialName));
+
+            if (!string.IsNullOrEmpty(operateType))
+                query = query.Where(x => x.OperateType == operateType);
+
+            var data = await query.OrderByDescending(x => x.OperateTime).ToListAsync();
+
+            // 拼接csv文本，简单高效导出
+            var sb = new StringBuilder();
+            sb.AppendLine("物料名称,操作类型,变动数量,操作前库存,操作后库存,操作人,操作时间,备注");
+
+            foreach (var item in data)
+            {
+                var typeText = item.OperateType == "In" ? "入库" : "出库";
+                sb.AppendLine($"{item.Material?.Name},{typeText},{item.ChangeCount},{item.BeforeStock},{item.AfterStock},{item.OperateUser},{item.OperateTime:yyyy-MM-dd HH:mm:ss},{item.Remark}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            return File(bytes, "text/csv", $"库存操作日志_{DateTime.Now:yyyyMMddHHmmss}.csv");
         }
     }
 }

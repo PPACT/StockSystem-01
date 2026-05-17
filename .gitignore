@@ -362,3 +362,16 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /StockSystem.slnx
+.claude/
+
+# Environment & secrets files
+.env
+.env.*
+secrets.*
+*.pem
+*.key
+*.crt
+
+# Local development settings (may contain secrets)
+appsettings.Development.json
+appsettings.*.local.json

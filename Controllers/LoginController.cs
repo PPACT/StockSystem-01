@@ -30,10 +30,10 @@ namespace StockSystem.Controllers
 
             return ApiResult.Success(new
             {
-                user.Id,
-                user.Username,
-                user.Role,
-                token  // 👈 这里返回 Token 给前端
+                id = user.Id,
+                username = user.Username,
+                role = user.Role,
+                token
             }, "登录成功");
         }
     }
