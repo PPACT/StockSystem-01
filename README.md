@@ -94,6 +94,8 @@ cd D:\Code\Test
 docker compose up -d
 ```
 
+### 架构图
+
 ```
                  stock-net (bridge)
 ┌──────────────┬─────────────────┬──────────────────┐
@@ -101,17 +103,33 @@ docker compose up -d
 │  :1433       │    :5000        │    :80           │
 │  SQL 2022    │    .NET 10      │    Nginx + Vue3  │
 └──────────────┴─────────────────┴──────────────────┘
-       ↑               ↑                   ↑
-    localhost:1433  localhost:5000    localhost:80
 ```
 
-| 服务 | 端口 | 环境变量 |
-|------|------|----------|
-| sqlserver | 1433 | `MSSQL_SA_PASSWORD` |
-| backend | 5000 | `CONNECTION_STRING`, `JWT_SECRET`, `STOCK_ADMIN_PASSWORD` |
-| frontend | 80 | 无（Nginx 代理 /api → backend） |
+### 访问地址
 
-访问地址：http://localhost
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| 前端页面 | http://localhost:80 | Nginx 代理 `/api` 到 backend |
+| 后端 API | http://localhost:5000 | 直接访问 API |
+| Swagger 文档 | http://localhost:5000/swagger | 开发模式可用 |
+
+### 端口配置
+
+主机端口通过 `.env` 文件控制，默认值：
+
+```
+SQLSERVER_PORT=1433    # 数据库
+BACKEND_PORT=5000      # 后端 API
+FRONTEND_PORT=80       # 前端页面
+```
+
+**端口被占用？** 修改 `.env` 中对应端口即可，例如其他机器上 80 被占用时：
+
+```
+FRONTEND_PORT=8080
+```
+
+重启后访问 `http://localhost:8080`。容器内部端口不变，只改主机映射端口，服务间通信不受影响。`docker compose up -d` 会自动读取 `.env` 配置。
 
 ## 本地开发
 
@@ -140,11 +158,16 @@ npm run dev
 
 ## 环境变量
 
-| 变量 | 作用 | 场景 |
-|------|------|------|
-| `CONNECTION_STRING` | 数据库连接串 | Docker 必需 |
-| `JWT_SECRET` | JWT 签名密钥（≥16 字符） | 生产/Docker 必需 |
-| `STOCK_ADMIN_PASSWORD` | 初始 admin 密码 | Docker 推荐，未设则随机生成 |
+| 变量 | 默认值 | 作用 |
+|------|--------|------|
+| `SQLSERVER_PORT` | `1433` | 数据库主机映射端口 |
+| `BACKEND_PORT` | `5000` | 后端 API 主机映射端口 |
+| `FRONTEND_PORT` | `80` | 前端页面主机映射端口 |
+| `SA_PASSWORD` | `Dev@123456` | SQL Server SA 密码 |
+| `JWT_SECRET` | `StockSystem-...` | JWT 签名密钥（≥16 字符） |
+| `ADMIN_PASSWORD` | `Admin@2026` | 初始 admin 登录密码 |
+
+> 生产环境务必修改 `SA_PASSWORD`、`JWT_SECRET`、`ADMIN_PASSWORD`。端口按需调整。
 
 ## 安全措施
 
