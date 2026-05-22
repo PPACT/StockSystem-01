@@ -87,6 +87,28 @@ Users ───────┘
 
 启动时自动建表并创建 admin 用户。
 
+### 管理员初始密码（重要）
+
+密码取决于运行环境，**Docker 和本地开发不同**：
+
+| 场景 | 密码来源 | 密码值 |
+|------|----------|--------|
+| Docker | `.env` → `ADMIN_PASSWORD` | `Admin@2026`（默认值，可修改） |
+| VS / 本地开发 | 无环境变量 → **随机生成 16 位 GUID** | 首次启动时控制台打印，请注意查看 |
+
+代码逻辑（`Data/DbInitializer.cs`）：
+
+```csharp
+string adminPassword = Environment.GetEnvironmentVariable("STOCK_ADMIN_PASSWORD");
+if (string.IsNullOrEmpty(adminPassword))
+{
+    adminPassword = Guid.NewGuid().ToString("N")[..16];  // 随机生成
+    Console.WriteLine("随机管理员密码: " + adminPassword);
+}
+```
+
+> **本地开发时**：首次运行 `dotnet run` 后请留意控制台输出，密码仅打印一次，不会写入任何配置文件。如需固定密码，在系统环境变量中设置 `STOCK_ADMIN_PASSWORD`。
+
 ## Docker 部署
 
 ```bash
